@@ -1,0 +1,3 @@
+framework:
+    router: false
+#        strict_requirements: null

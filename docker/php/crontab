@@ -1,0 +1,2 @@
+# 0 * * * * php /var/www/bin/console app:wind-forecast --env=prod --no-debug --no-interaction
+
