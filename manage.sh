@@ -51,23 +51,10 @@ case $1 in
 build)
   case $2 in
   php)
-    docker build -f "./docker/php/${APP_ENV}/Dockerfile" \
-      -t "ekyna/wgrib-php-${APP_ENV}" \
-      --build-arg WGRIB_VERSION="${WGRIB_VERSION}" \
-      --build-arg USER="${USER}" \
-      --build-arg GROUP="${GROUP}" \
-      --build-arg USER_ID="${USER_ID}" \
-      --build-arg GROUP_ID="${GROUP_ID}" \
-      .
+    docker build -f "./docker/php/${APP_ENV}/Dockerfile" -t "ekyna/wgrib-php-${APP_ENV}" .
     ;;
   nginx)
-    docker build -f ./docker/nginx/Dockerfile \
-      -t ekyna/wgrib-nginx \
-      --build-arg USER="${USER}" \
-      --build-arg GROUP="${GROUP}" \
-      --build-arg USER_ID="${USER_ID}" \
-      --build-arg GROUP_ID="${GROUP_ID}" \
-      .
+    docker build -f ./docker/nginx/Dockerfile -t ekyna/wgrib-nginx .
     ;;
   *)
     printf "Usage: ./manage build [php|nginx]"
