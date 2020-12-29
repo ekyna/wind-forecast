@@ -62,7 +62,7 @@ class Generator
      */
     public function generateWindDS(DateTime $date, string $resolution): string
     {
-        Resolution::validateResolution($resolution);
+        Resolution::validate($resolution);
 
         // DOWNLOAD
         $path = $this->downloader->download($date, $resolution);
@@ -113,7 +113,7 @@ class Generator
      */
     public function generateWindUV(DateTime $date, string $resolution): string
     {
-        Resolution::validateResolution($resolution);
+        Resolution::validate($resolution);
 
         // DOWNLOAD
         $path = $this->downloader->download($date, $resolution);

@@ -2,6 +2,8 @@
 
 source .env
 
+COMPOSE_FILES="-f compose-${APP_ENV}.yml"
+
 # ----------------------------- VOLUME -----------------------------
 
 VolumeExists() {
@@ -14,6 +16,14 @@ VolumeExists() {
 VolumeCreate() {
   if ! VolumeExists "${1}"; then
     if ! docker volume create --name "${1}"; then
+      exit 1
+    fi
+  fi
+}
+
+VolumeRemove() {
+  if VolumeExists "${1}"; then
+    if ! docker volume rm "${1}"; then
       exit 1
     fi
   fi
@@ -41,8 +51,8 @@ case $1 in
 build)
   case $2 in
   php)
-    docker build -f ./docker/php/Dockerfile \
-      -t ekyna/wgrib-php \
+    docker build -f "./docker/php/${APP_ENV}/Dockerfile" \
+      -t "ekyna/wgrib-php-${APP_ENV}" \
       --build-arg WGRIB_VERSION="${WGRIB_VERSION}" \
       --build-arg USER="${USER}" \
       --build-arg GROUP="${GROUP}" \
@@ -67,10 +77,18 @@ build)
 up)
   VolumeCreate "${COMPOSE_PROJECT_NAME}_public"
   VolumeCreate "${COMPOSE_PROJECT_NAME}_vendor"
-  docker-compose -f compose.yml up -d
+  docker-compose ${COMPOSE_FILES} up -d
+  if [[ "${APP_ENV}" == "prod" ]]; then
+    Composer "install --prefer-dist --no-interaction --no-progress --no-suggest"
+  fi
   ;;
 down)
-  docker-compose -f compose.yml down
+  docker-compose ${COMPOSE_FILES} down -v --remove-orphans
+  ;;
+clear)
+  docker-compose ${COMPOSE_FILES} down -v --remove-orphans
+  VolumeRemove "${COMPOSE_PROJECT_NAME}_public"
+  VolumeRemove "${COMPOSE_PROJECT_NAME}_vendor"
   ;;
 sf)
   SfCommand "${*:2}"
@@ -81,7 +99,12 @@ composer)
 # ------------- HELP -------------
 *)
   printf "Usage: ./manage.sh [args]
- - build [name] : Builds the [name] service image.
+ - build [php|nginx]    Builds the service image.
+ - up                   Starts the services.
+ - down                 Stops the services.
+ - clear                Stops the services and deletes the volumes.
+ - sf [cmd]             Runs the symfony command.
+ - composer [cmd]       Runs the composer command.
  "
   ;;
 esac

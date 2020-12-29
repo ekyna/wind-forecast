@@ -2,9 +2,9 @@
 
 namespace App\Service;
 
+use App\Util\DateUtil;
 use App\Util\Resolution;
 use DateTime;
-use DateTimeZone;
 use RuntimeException;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,18 +56,15 @@ class Downloader
      */
     public function download(DateTime $date, string $resolution): string
     {
-        Resolution::validateResolution($resolution);
+        Resolution::validate($resolution);
 
         $this->resolution = $resolution;
 
         $this->resolveCycle();
 
-        // Break reference
-        $date = clone $date;
-        // Set timezone
-        $date->setTimezone(new DateTimeZone('UTC'));
-        // 3 hours rounding
-        $date->setTime(intval($date->format('G') / 3) * 3, 0);
+        if (!DateUtil::checkStep($date, 3)) {
+            throw new RuntimeException("Unexpected date time.");
+        }
 
         // Calculate offset
         $diff = $this->cycle->diff($date);
@@ -75,7 +72,6 @@ class Downloader
 
         $url = $this->buildUrl($offset);
 
-        // TODO Rework trying => cycle -6 hours
         // First try
         try {
             $response = $this->client->request('GET', $url);
@@ -124,10 +120,7 @@ class Downloader
             return;
         }
 
-        $this->cycle = new DateTime();
-        $this->cycle->setTimezone(new DateTimeZone('UTC'));
-        // 6 hours rounding
-        $this->cycle->setTime(intval($this->cycle->format('G') / 6) * 6, 0);
+        $this->cycle = DateUtil::roundStep(null, 6);
 
         $attempt = 8;
         while (0 < $attempt) {

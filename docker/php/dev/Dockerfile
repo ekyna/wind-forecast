@@ -1,10 +1,3 @@
-# ======================================================================
-# Dockerfile to compile wgrib2 based on Alpine linux
-#
-#           Homepage: http://www.cpc.ncep.noaa.gov/products/wesley/wgrib2/
-# Available versions: ftp://ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/
-# ======================================================================
-
 FROM area51/alpine-dev AS base
 
 ENV WGRIB_VERSION="3.0.0"
@@ -33,7 +26,6 @@ RUN cd /opt/grib2 && \
     make
 
 # ======================================================================
-# The final image with alpine & just wgrib2 installed
 FROM alpine:3.12
 
 ENV USER="wgrib"
@@ -45,7 +37,6 @@ ENV TZ="UTC" \
     LANG="C.UTF-8" \
     COMPOSER_MIRROR_PATH_REPOS=1
 
-# fix work iconv library with alphine
 RUN apk add --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community/ --allow-untrusted gnu-libiconv
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
@@ -80,21 +71,13 @@ RUN apk add --no-cache \
 COPY --from=base /opt/grib2/wgrib2/wgrib2 /usr/local/bin/wgrib2
 COPY docker/php/php.ini /etc/php7/conf.d/51-setting.ini
 COPY docker/php/php-fpm.conf /etc/php7/php-fpm.conf
-COPY docker/php/cron-cmd.sh /cron-cmd.sh
-COPY docker/php/cron-entry.sh /cron-entry.sh
-COPY docker/php/crontab /etc/crontabs/${USER}
 COPY docker/php/entrypoint.sh /entrypoint.sh
-#COPY symfony /var/www
 
-RUN chmod +x /entrypoint.sh /cron-cmd.sh /cron-entry.sh \
+RUN chmod +x /entrypoint.sh \
  && mkdir -p /entrypoint.d \
- && mkdir -p /etc/cron.d \
  && mkdir -m 0755 -p /var/www/var/wind \
  && mkdir -m 0755 -p /var/www/vendor \
- && chown -Rf ${USER}:${GROUP} /var/www \
- && chown -f root:root /etc/cron.d \
- && chown -f root:root /etc/crontabs/${USER} \
- && chmod 0600 /etc/crontabs/${USER}
+ && chown -Rf ${USER}:${GROUP} /var/www
 
 WORKDIR /var/www
 

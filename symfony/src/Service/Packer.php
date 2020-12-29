@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Util\Types;
 use RuntimeException;
 
 /**
@@ -24,7 +25,7 @@ class Packer
 
         $data = $this->pack('ss', $uData, $vData, 100);
 
-        if (false === $pPath = tempnam(sys_get_temp_dir(), 'wuv_')) {
+        if (false === $pPath = tempnam(sys_get_temp_dir(), Types::UV)) {
             throw new RuntimeException("Failed to create wind pack file.");
         }
 
@@ -48,7 +49,7 @@ class Packer
 
         $data = $this->pack('SS', $dData, $sData, 100);
 
-        if (false === $pPath = tempnam(sys_get_temp_dir(), 'wds_')) {
+        if (false === $pPath = tempnam(sys_get_temp_dir(), Types::DS)) {
             throw new RuntimeException("Failed to create wind pack file.");
         }
 

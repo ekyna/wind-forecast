@@ -11,9 +11,9 @@ use InvalidArgumentException;
  */
 final class Resolution
 {
-    public const RESOLUTION_0P25 = '0p25';
     public const RESOLUTION_1P00 = '1p00';
     public const RESOLUTION_0P50 = '0p50';
+    public const RESOLUTION_0P25 = '0p25';
 
 
     /**
@@ -21,7 +21,7 @@ final class Resolution
      *
      * @param string $resolution
      */
-    public static function validateResolution(string $resolution): void
+    public static function validate(string $resolution): void
     {
         if (in_array($resolution, self::getResolutions(), true)) {
             return;

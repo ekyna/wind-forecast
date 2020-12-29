@@ -1,0 +1,75 @@
+version: "3.9"
+
+networks:
+    default:
+        external:
+            name: "${NETWORK_NAME}"
+
+volumes:
+    public:
+        external:
+            name: "${COMPOSE_PROJECT_NAME}_public"
+    vendor:
+        external:
+            name: "${COMPOSE_PROJECT_NAME}_vendor"
+
+services:
+    nginx:
+        container_name: "${COMPOSE_PROJECT_NAME}_nginx"
+        restart: always
+        image: ekyna/wgrib-nginx
+        cpus: 0.1
+        mem_limit: 128M
+        environment:
+            - VIRTUAL_HOST=${VIRTUAL_HOST}
+            - VIRTUAL_NETWORK=${NETWORK_NAME}
+            - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+        ports:
+            - 8080:80
+        logging:
+            driver: "json-file"
+            options: { max-size: "10m", max-file: "3" }
+        networks:
+            default:
+                aliases:
+                    - -nginx.wgrib
+                    - "${VIRTUAL_HOST}"
+
+    php:
+        container_name: "${COMPOSE_PROJECT_NAME}_php"
+        restart: always
+        image: ekyna/wgrib-php-prod
+        cpus: 0.1
+        mem_limit: 128M
+        env_file: .env
+        volumes:
+            - public:/var/www/var/wind:rw
+            - vendor:/var/www/vendor:rw
+        logging:
+            driver: "json-file"
+            options: { max-size: "10m", max-file: "3" }
+        networks:
+            default:
+                aliases:
+                    - php.wgrib
+
+    cron:
+        container_name: "${COMPOSE_PROJECT_NAME}_cron"
+        restart: always
+        image: ekyna/wgrib-php-prod
+        cpus: 0.1
+        mem_limit: 128M
+        env_file: .env
+        volumes:
+            - public:/var/www/var/wind:rw
+            - vendor:/var/www/vendor:rw
+        entrypoint: "/cron-entry.sh"
+        command: "/cron-cmd.sh"
+        logging:
+            driver: "json-file"
+            options: { max-size: "2m", max-file: "3" }
+        networks:
+            default:
+                aliases:
+                    - cron.wgrib

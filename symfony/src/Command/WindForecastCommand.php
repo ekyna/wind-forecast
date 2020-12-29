@@ -3,7 +3,10 @@
 namespace App\Command;
 
 use App\Service\Generator;
+use App\Service\Path;
+use App\Util\DateUtil;
 use App\Util\Resolution;
+use App\Util\Types;
 use DateTime;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -27,9 +30,9 @@ class WindForecastCommand extends Command
     private $generator;
 
     /**
-     * @var string
+     * @var Path
      */
-    private $projectDir;
+    private $path;
 
     /**
      * @var Filesystem
@@ -41,14 +44,14 @@ class WindForecastCommand extends Command
      * Constructor.
      *
      * @param Generator $generator
-     * @param string    $projectDir
+     * @param Path      $path
      */
-    public function __construct(Generator $generator, string $projectDir)
+    public function __construct(Generator $generator, Path $path)
     {
         parent::__construct();
 
         $this->generator = $generator;
-        $this->projectDir = $projectDir;
+        $this->path = $path;
         $this->filesystem = new Filesystem();
     }
 
@@ -75,52 +78,68 @@ class WindForecastCommand extends Command
         $resolution = $input->getArgument('resolution');
         $steps = (int)$input->getOption('steps');
 
-        Resolution::validateResolution($resolution);
+        Resolution::validate($resolution);
 
-        $date = new DateTime();
+        $date = DateUtil::roundStep();
 
         // 24h - 3h step
         for ($i = 0; $i <= $steps; $i++) {
             // DS
             try {
-                $pack = $this->generator->generateWindDS($date, $resolution);
+                $this->packWindDirSpeed($date, $resolution);
             } catch (Throwable $e) {
                 $output->writeln("<error>{$e->getMessage()}</error>");
 
                 return 1;
             }
-
-            $path = sprintf(
-                '%s/var/wind/%s/ds/%s.wind',
-                $this->projectDir,
-                $resolution,
-                str_pad($i * 3, 3, '0', STR_PAD_LEFT)
-            );
-
-            $this->moveFile($pack, $path);
 
             // UV
             try {
-                $pack = $this->generator->generateWindUV($date, $resolution);
+                $this->packWindUV($date, $resolution);
             } catch (Throwable $e) {
                 $output->writeln("<error>{$e->getMessage()}</error>");
 
                 return 1;
             }
-
-            $path = sprintf(
-                '%s/var/wind/%s/uv/%s.wind',
-                $this->projectDir,
-                $resolution,
-                str_pad($i * 3, 3, '0', STR_PAD_LEFT)
-            );
-
-            $this->moveFile($pack, $path);
 
             $date->modify('+3 hours');
         }
 
         return 0;
+    }
+
+    /**
+     * Packs the wind dir speed file.
+     *
+     * @param DateTime $date
+     * @param string   $resolution
+     *
+     * @throws Throwable
+     */
+    private function packWindDirSpeed(DateTime $date, string $resolution): void
+    {
+        $pack = $this->generator->generateWindDS($date, $resolution);
+
+        $path = $this->path->build($date, $resolution, Types::DS);
+
+        $this->moveFile($pack, $path);
+    }
+
+    /**
+     * Packs the wind UV file.
+     *
+     * @param DateTime $date
+     * @param string   $resolution
+     *
+     * @throws Throwable
+     */
+    private function packWindUV(DateTime $date, string $resolution): void
+    {
+        $pack = $this->generator->generateWindUV($date, $resolution);
+
+        $path = $this->path->build($date, $resolution, Types::UV);
+
+        $this->moveFile($pack, $path);
     }
 
     /**

@@ -18,17 +18,11 @@ services:
         container_name: "${COMPOSE_PROJECT_NAME}_nginx"
         restart: always
         image: ekyna/wgrib-nginx
-#        cpus: 0.1
-#        mem_limit: 128M
         environment:
             - VIRTUAL_HOST=${VIRTUAL_HOST}
             - VIRTUAL_NETWORK=${NETWORK_NAME}
-#            - LETSENCRYPT_HOST=${VIRTUAL_HOST}
-#            - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
         ports:
             - 8080:80
-        volumes:
-            - public:/var/www/public:ro
         logging:
             driver: "json-file"
             options: { max-size: "10m", max-file: "3" }
@@ -41,14 +35,11 @@ services:
     php:
         container_name: "${COMPOSE_PROJECT_NAME}_php"
         restart: always
-        image: ekyna/wgrib-php
+        image: ekyna/wgrib-php-dev
         env_file: .env
-#        cpus: 0.5
-#        mem_limit: 512M
         volumes:
             - ./symfony:/var/www:rw
             - public:/var/www/var/wind:rw
-#            - vendor:/var/www/vendor:rw
         logging:
             driver: "json-file"
             options: { max-size: "10m", max-file: "3" }
@@ -56,22 +47,3 @@ services:
             default:
                 aliases:
                     - php.wgrib
-
-#    cron:
-#        container_name: "${COMPOSE_PROJECT_NAME}_cron"
-#        restart: always
-#        image: ekyna/wgrib-php
-##        cpus: 0.1
-##        mem_limit: 512M
-#        volumes:
-#            - ./symfony:/var/www:rw
-#            - public_wind:/var/www/public/wind:ro
-#        entrypoint: "/cron-entry.sh"
-#        command: "/cron-cmd.sh"
-#        logging:
-#            driver: "json-file"
-#            options: { max-size: "2m", max-file: "3" }
-#        networks:
-#            default:
-#                aliases:
-#                    - cron.wgrib
