@@ -22,11 +22,6 @@ class WindController
      */
     private $path;
 
-    /**
-     * @var Filesystem
-     */
-    private $filesystem;
-
 
     /**
      * Constructor.
